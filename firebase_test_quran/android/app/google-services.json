@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "548619356231",
+    "project_id": "quran-words-2b4b2",
+    "storage_bucket": "quran-words-2b4b2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:548619356231:android:1978bb57617af3c49f8962",
+        "android_client_info": {
+          "package_name": "com.example.firebase_test_quran"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEo0_2so0appzjbEGKlRQBlYtOALw1Iz4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
