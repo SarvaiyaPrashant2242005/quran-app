@@ -5,6 +5,7 @@ import 'package:firebase_test_quran/widgets/language_card.dart';
 import 'package:firebase_test_quran/widgets/page_indicator.dart';
 import 'package:firebase_test_quran/widgets/loading_overlay.dart';
 import 'package:firebase_test_quran/screens/SettingsScreen.dart';
+import 'package:firebase_test_quran/screens/QuizScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:screen_protector/screen_protector.dart';
@@ -23,10 +24,18 @@ extension _MyHomePageStateHelpers on _MyHomePageState {
     if (_didInitialJump) return;
     final verses = controller.data?.verses ?? const <Verse>[];
     if (verses.isEmpty) return;
+
     final idx = controller.resumeIndex;
+    final hasLearned = controller.learnedCount > 0;
+
+    // Avoid jumping prematurely to 0 when learned data hasn't loaded yet
+    if (hasLearned && idx == 0) return;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _pageController.jumpToPage(idx);
-      controller.updateCurrentIndex(idx);
+      if (mounted) {
+        _pageController.jumpToPage(idx);
+        controller.updateCurrentIndex(idx);
+      }
     });
     _didInitialJump = true;
   }
@@ -74,7 +83,9 @@ class _MyHomePageState extends State<MyHomePage> {
         elevation: 0,
         title: _tabIndex == 0
             ? const Text('', style: TextStyle(color: Colors.white))
-            : const Text('Settings', style: TextStyle(color: Colors.white, fontSize: 16)),
+            : _tabIndex == 1
+                ? const Text('Quiz', style: TextStyle(color: Colors.white, fontSize: 16))
+                : const Text('Settings', style: TextStyle(color: Colors.white, fontSize: 16)),
         actions: const [],
       ),
       extendBodyBehindAppBar: true,
@@ -84,12 +95,17 @@ class _MyHomePageState extends State<MyHomePage> {
         final error = controller.error;
         final loading = controller.loading;
         final ttsChecking = controller.ttsChecking;
-
+        // Access these to make Obx rebuild when they change
+        final resumeIdx = controller.resumeIndex;
+        final learnedCount = controller.learnedCount;
         // Ensure we perform a one-time jump to the resume index once data is ready
         _maybeJumpToResume();
 
-        // Tabs: 0=Home (Learning), 1=Settings
+        // Tabs: 0=Home (Learning), 1=Quiz, 2=Settings
         if (_tabIndex == 1) {
+          return const QuizScreen();
+        }
+        if (_tabIndex == 2) {
           return const SettingsScreen();
         }
 
@@ -211,6 +227,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onTap: (i) => setState(() => _tabIndex = i),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Quiz'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
       ),

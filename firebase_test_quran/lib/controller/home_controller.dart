@@ -1,4 +1,4 @@
-// home_controller.dart (GetX version)
+// home_controller.dart (GetX version with auto-resume)
 import 'dart:io';
 import 'package:firebase_test_quran/models/verse_data.dart';
 import 'package:firebase_test_quran/services/firestore_service.dart';
@@ -21,8 +21,8 @@ class HomeController extends GetxController {
   final _currentIndex = 0.obs;
   final _showIndicator = false.obs;
   // TTS gating states
-  final _ttsChecking = false.obs; // show loader while checking engine
-  final _ttsInstalled = false.obs; // cache engine availability
+  final _ttsChecking = false.obs;
+  final _ttsInstalled = false.obs;
   Timer? _indicatorTimer;
 
   // Learning state
@@ -30,6 +30,13 @@ class HomeController extends GetxController {
   final _lastIndex = RxnInt();
   final _resumeIndex = 0.obs;
   bool _resumeCalculated = false;
+
+  // Quiz state
+  final _quizHighScore = 0.obs;
+  final _lastQuizLearnedCount = 0.obs;
+
+  // Auto-scroll flag - set to true when we should jump to resume index
+  final _shouldAutoScroll = false.obs;
 
   // Getters
   VerseData? get data => _data.value;
@@ -44,12 +51,15 @@ class HomeController extends GetxController {
   int get learnedCount => _learned.length;
   int get totalCount => _data.value?.verses.length ?? 0;
   int get resumeIndex => _resumeIndex.value;
+  int get quizHighScore => _quizHighScore.value;
+  int get lastQuizLearnedCount => _lastQuizLearnedCount.value;
+  bool get shouldAutoScroll => _shouldAutoScroll.value;
 
   HomeController({
     required LocalDataService local,
     required FirestoreService remote,
     required TtsService tts,
-  })  : _local = local,                                                              
+  })  : _local = local,
         _remote = remote,
         _tts = tts;
 
@@ -59,13 +69,13 @@ class HomeController extends GetxController {
     _setupTtsCallbacks();
     _tts.init();
     init();
-    // Immediately check TTS installation and gate UI if not available
     checkAndPromptTtsInstallation();
   }
 
   Future<void> init() async {
     await _loadLocal();
     await _loadLearningProgress();
+    await _loadQuizState();
     _calculateResumeIndex();
   }
 
@@ -118,13 +128,11 @@ class HomeController extends GetxController {
   }
 
   Future<void> speak(String id, String text, String lang) async {
-    // Block speak when TTS is not installed; show info dialog instead
     if (!_ttsInstalled.value) {
       await checkAndPromptTtsInstallation();
       return;
     }
 
-    // Set speaking immediately so UI updates the icon right away
     _speakingId.value = id;
 
     await _tts.speak(
@@ -134,13 +142,11 @@ class HomeController extends GetxController {
       speechRate: 0.45,
       pitch: 1.0,
     );
-    // speakingId will be cleared by TTS completion/cancel/error callbacks
   }
 
   void updateCurrentIndex(int index) {
     if (index != _currentIndex.value) {
       _currentIndex.value = index;
-      // track last seen index for resume
       _lastIndex.value = index;
       _local.saveLastIndex(index);
     }
@@ -154,7 +160,6 @@ class HomeController extends GetxController {
     });
   }
 
-  // Check if TTS engine is installed and prompt if not
   Future<void> checkAndPromptTtsInstallation() async {
     _ttsChecking.value = true;
     _error.value = null;
@@ -162,18 +167,15 @@ class HomeController extends GetxController {
       final isInstalled = await _tts.isTtsEngineInstalled();
       _ttsInstalled.value = isInstalled;
       if (!isInstalled) {
-        // Show installation dialog once check completes
         _showTtsInstallDialog();
       }
     } catch (e) {
-      // If anything goes wrong, treat as not installed but don't crash
       _ttsInstalled.value = false;
     } finally {
       _ttsChecking.value = false;
     }
   }
 
-  // Show dialog to install TTS engine
   void _showTtsInstallDialog() {
     Get.dialog(
       AlertDialog(
@@ -226,23 +228,19 @@ class HomeController extends GetxController {
     );
   }
 
-  // Open Play Store or App Store to install TTS
   Future<void> _openTtsInstallPage() async {
     try {
       if (Platform.isAndroid) {
-        // Try to open Play Store app first
         final uri = Uri.parse('market://details?id=com.google.android.tts');
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } else {
-          // Fallback to browser
           final webUri = Uri.parse(
             'https://play.google.com/store/apps/details?id=com.google.android.tts',
           );
           await launchUrl(webUri, mode: LaunchMode.externalApplication);
         }
       } else if (Platform.isIOS) {
-        // iOS has built-in TTS
         Get.snackbar(
           'Info',
           'Text-to-Speech is built into iOS. Please check your device settings under Accessibility > Spoken Content.',
@@ -263,16 +261,13 @@ class HomeController extends GetxController {
     }
   }
 
-  // Check TTS status (for info button)
   Future<void> checkTtsStatus() async {
     final available = await _tts.isTtsAvailable();
     final languages = await _tts.getAvailableLanguages();
     final isInstalled = await _tts.isTtsEngineInstalled();
 
-    // keep cached flag in sync
     _ttsInstalled.value = isInstalled;
 
-    // Show status with first few languages
     final languagePreview = languages.take(5).join(', ');
     final moreLanguages = languages.length > 5 ? ' +${languages.length - 5} more' : '';
 
@@ -300,7 +295,6 @@ class HomeController extends GetxController {
             const SizedBox(height: 12),
             const Divider(),
             const SizedBox(height: 12),
-          
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(12),
@@ -362,7 +356,6 @@ class HomeController extends GetxController {
     );
   }
 
-  // Learning: load/save progress and sequencing
   Future<void> _loadLearningProgress() async {
     final learned = await _local.loadLearnedIndices();
     _learned
@@ -376,6 +369,28 @@ class HomeController extends GetxController {
     if (_lastIndex.value != null) {
       await _local.saveLastIndex(_lastIndex.value!);
     }
+  }
+
+  Future<void> _loadQuizState() async {
+    _quizHighScore.value = await _local.loadQuizHighScore();
+    _lastQuizLearnedCount.value = await _local.loadLastQuizLearnedCount();
+  }
+
+  Future<void> setQuizHighScore(int score) async {
+    if (score > _quizHighScore.value) {
+      _quizHighScore.value = score;
+      await _local.saveQuizHighScore(score);
+    }
+  }
+
+  Future<void> setLastQuizLearnedCount(int count) async {
+    _lastQuizLearnedCount.value = count;
+    await _local.saveLastQuizLearnedCount(count);
+  }
+
+  Future<void> quizCompleted({required int score}) async {
+    await setQuizHighScore(score);
+    await setLastQuizLearnedCount(learnedCount);
   }
 
   void _calculateResumeIndex() {
@@ -398,7 +413,7 @@ class HomeController extends GetxController {
       final idx = (start + i) % total;
       if (!_learned.contains(idx)) return idx;
     }
-    return null; // all learned
+    return null;
   }
 
   bool isLearned(int index) => _learned.contains(index);
@@ -407,6 +422,10 @@ class HomeController extends GetxController {
     _learned.add(index);
     _lastIndex.value = index;
     await _saveLearningProgress();
+
+    // Recalculate resume index immediately so future navigations start correctly
+    _resumeCalculated = false;
+    _calculateResumeIndex();
   }
 
   Future<void> resetLearning() async {
@@ -417,12 +436,10 @@ class HomeController extends GetxController {
     _calculateResumeIndex();
   }
 
-  // Sequence learning for a page: speak AR -> EN -> UR, then mark learned
   Future<int?> learnAtIndex(int index) async {
     final verses = _data.value?.verses ?? const <Verse>[];
     if (index < 0 || index >= verses.length) return null;
 
-    // Ensure TTS engine
     if (!_ttsInstalled.value) {
       await checkAndPromptTtsInstallation();
       if (!_ttsInstalled.value) return null;
@@ -430,13 +447,11 @@ class HomeController extends GetxController {
 
     final v = verses[index];
     try {
-      // Also speak the header word shown in VerseHeader before the sequence
       await _tts.speak(id: '${index}-hword', text: v.word, language: 'ar');
       await _tts.speak(id: '${index}-ar', text: v.arabic, language: 'ar');
       await _tts.speak(id: '${index}-en', text: v.english, language: 'en-US');
       await _tts.speak(id: '${index}-ur', text: v.urdu, language: 'ur-PK');
     } catch (_) {
-      // If any speak fails, do not mark learned
       return null;
     }
 
@@ -445,16 +460,30 @@ class HomeController extends GetxController {
     return next;
   }
 
+  // NEW: Method to trigger auto-scroll to resume index
+  void triggerAutoScroll() {
+    _shouldAutoScroll.value = true;
+  }
+
+  // NEW: Method to clear auto-scroll flag after scrolling is done
+  void clearAutoScrollFlag() {
+    _shouldAutoScroll.value = false;
+  }
+
+  // NEW: Method to jump to resume index and update current index
+  void jumpToResumeIndex() {
+    _currentIndex.value = _resumeIndex.value;
+    triggerAutoScroll();
+  }
+
   @override
   void onClose() {
     _indicatorTimer?.cancel();
     _tts.dispose();
     super.onClose();
   }
-
 }
 
-// Helper method to build status rows
 Widget _buildStatusRow(String label, bool status) {
   return Row(
     children: [
@@ -479,19 +508,9 @@ Widget _buildStatusRow(String label, bool status) {
   );
 }
 
-// Add this new method to open uninstall page
-// Updated method to open TTS app settings (best we can do)
 Future<void> _openTtsUninstallPage() async {
   try {
     if (Platform.isAndroid) {
-      // Open the TTS app details page in Android settings
-      final uri = Uri.parse('android.settings.APPLICATION_DETAILS_SETTINGS');
-      final packageUri = Uri(
-        scheme: 'package',
-        path: 'com.google.android.tts',
-      );
-      
-      // Try to open app details
       try {
         await launchUrl(
           Uri.parse('market://details?id=com.google.android.tts'),

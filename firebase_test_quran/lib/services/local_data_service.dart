@@ -10,6 +10,8 @@ class LocalDataService {
   static const String prefsKey = 'verse_data_json';
   static const String learnedKey = 'learned_indices';
   static const String lastIndexKey = 'last_index';
+  static const String quizHighScoreKey = 'quiz_high_score';
+  static const String lastQuizLearnedCountKey = 'last_quiz_learned_count';
 
   Future<bool> localExists() async {
     final prefs = await SharedPreferences.getInstance();
@@ -93,5 +95,26 @@ class LocalDataService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(learnedKey);
     await prefs.remove(lastIndexKey);
+  }
+
+  // Quiz persistence
+  Future<int> loadQuizHighScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(quizHighScoreKey) ?? 0;
+    }
+
+  Future<void> saveQuizHighScore(int score) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(quizHighScoreKey, score);
+  }
+
+  Future<int> loadLastQuizLearnedCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(lastQuizLearnedCountKey) ?? 0;
+  }
+
+  Future<void> saveLastQuizLearnedCount(int count) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(lastQuizLearnedCountKey, count);
   }
 }
