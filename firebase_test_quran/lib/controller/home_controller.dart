@@ -401,9 +401,15 @@ class HomeController extends GetxController {
       _resumeCalculated = true;
       return;
     }
-    final start = ((_lastIndex.value ?? -1) + 1).clamp(0, total - 1);
-    _resumeIndex.value = nextUnlearnedFrom(start) ?? 0;
+    // Always point to the first unlearned item, not based on last viewed
+    _resumeIndex.value = nextUnlearnedFrom(0) ?? 0;
     _resumeCalculated = true;
+  }
+
+  // Public: force recalculation of resume index
+  void recalculateResumeIndex() {
+    _resumeCalculated = false;
+    _calculateResumeIndex();
   }
 
   int? nextUnlearnedFrom(int start) {

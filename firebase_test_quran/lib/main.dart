@@ -6,7 +6,7 @@ import 'firebase_options.dart';
 import 'package:get/get.dart';
 import 'package:firebase_test_quran/screens/SplashScreen.dart';
 import 'package:screen_protector/screen_protector.dart';
- 
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

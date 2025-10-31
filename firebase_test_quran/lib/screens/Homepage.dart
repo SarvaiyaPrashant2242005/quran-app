@@ -25,11 +25,8 @@ extension _MyHomePageStateHelpers on _MyHomePageState {
     final verses = controller.data?.verses ?? const <Verse>[];
     if (verses.isEmpty) return;
 
+    controller.recalculateResumeIndex();
     final idx = controller.resumeIndex;
-    final hasLearned = controller.learnedCount > 0;
-
-    // Avoid jumping prematurely to 0 when learned data hasn't loaded yet
-    if (hasLearned && idx == 0) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -221,10 +218,26 @@ class _MyHomePageState extends State<MyHomePage> {
       }),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _tabIndex,
-        backgroundColor: Colors.black.withOpacity(0.6),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        onTap: (i) => setState(() => _tabIndex = i),
+       backgroundColor: Colors.black.withOpacity(0.85),
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
+        onTap: (i) {
+          setState(() => _tabIndex = i);
+          if (i == 0) {
+            // When returning to Home, jump to next unlearned immediately
+            final verses = controller.data?.verses ?? const <Verse>[];
+            if (verses.isNotEmpty) {
+              controller.recalculateResumeIndex();
+              final idx = controller.resumeIndex;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _pageController.jumpToPage(idx);
+                  controller.updateCurrentIndex(idx);
+                }
+              });
+            }
+          }
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Quiz'),

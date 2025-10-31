@@ -245,7 +245,7 @@ class _QuizScreenState extends State<QuizScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: const Text('Quiz Completed'),
               content: Text(
-                'Your score: $_score/${_questionIndices.length}\n\nPlease learn new words to continue.',
+                'Your score: $_score/${_questionIndices.length}',
               ),
               actions: [
                 TextButton(
@@ -319,12 +319,10 @@ class _QuizScreenState extends State<QuizScreen> {
 
       String message = '';
       bool canStart = true;
+      final alreadyTakenForCurrent = lastCount > 0 && learned <= lastCount;
 
       if (learned < 5) {
         message = 'Learn at least 5 words to start the quiz.';
-        canStart = false;
-      } else if (learned <= lastCount && lastCount > 0) {
-        message = 'You\'ve already completed a quiz for your current $learned learned words. Learn more words to continue.';
         canStart = false;
       }
 
@@ -354,14 +352,29 @@ class _QuizScreenState extends State<QuizScreen> {
                     children: [
                       const Text(
                         'Play Quiz',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Color.fromARGB(255, 191, 255, 0)),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Test your knowledge on all learned words. Questions are generated from your learned list only.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: const Color.fromARGB(255, 255, 255, 255)),
+                        style: TextStyle(fontSize: 18,  color: const Color.fromARGB(255, 255, 255, 255)),
                       ),
+                      const SizedBox(height: 16),
+                      if (alreadyTakenForCurrent)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Text(
+                            'You have already taken a quiz for your current $learned learned words.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.blue.shade900),
+                          ),
+                        ),
                       const SizedBox(height: 16),
                       if (!canStart)
                         Container(
@@ -386,7 +399,7 @@ class _QuizScreenState extends State<QuizScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('Start Quiz'),
+                        child: Text(alreadyTakenForCurrent ? 'Play Quiz Again' : 'Start Quiz'),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -605,8 +618,6 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
- 
-
                 ],
               ),
           ],
