@@ -4,6 +4,7 @@ import 'package:quran_verse_admin/controllers/verse_controller.dart';
 import 'package:quran_verse_admin/models/verse.dart';
 import 'package:quran_verse_admin/widgets/app_background.dart';
 import 'package:quran_verse_admin/services/firestore_service.dart';
+import 'package:quran_verse_admin/screens/login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -61,7 +62,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
-        actions: const [],
+        actions: [
+          IconButton(
+            tooltip: 'Logout',
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+          ),
+        ],
       ),
       body: AppBackground(
         child: controller.loading

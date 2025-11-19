@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_verse_admin/controllers/verse_controller.dart';
 import 'package:quran_verse_admin/firebase_options.dart';
-import 'package:quran_verse_admin/screens/main_shell.dart';
+import 'package:quran_verse_admin/screens/login_screen.dart';
 import 'package:quran_verse_admin/widgets/app_background.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await controller.init();
     if (!mounted) return;
     unawaited(Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MainShell()),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
     ));
   }
 
