@@ -13,7 +13,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _rank = TextEditingController();
   final _word = TextEditingController();
@@ -26,18 +26,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final _english = TextEditingController();
   final _urdu = TextEditingController();
   final _searchController = TextEditingController();
-
-  late AnimationController _searchAnimController;
   bool _isSearchExpanded = false;
 
   @override
   void initState() {
     super.initState();
-    _searchAnimController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
     _searchController.addListener(() {
       setState(() {});
     });
@@ -56,7 +49,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _english.dispose();
     _urdu.dispose();
     _searchController.dispose();
-    _searchAnimController.dispose();
     super.dispose();
   }
 
@@ -73,28 +65,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _toggleSearchBar() {
-    if (_isSearchExpanded) {
-      _searchAnimController.reverse();
-      _searchController.clear();
-    } else {
-      _searchAnimController.forward();
-    }
     setState(() {
       _isSearchExpanded = !_isSearchExpanded;
+      if (!_isSearchExpanded) {
+        _searchController.clear();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<VerseController>();
-    if (controller.data != null && controller.data!.verses.isNotEmpty) {
-      _rank.text = '#${controller.data!.verses.length + 1}';
+    if (controller.data.verses.isNotEmpty) {
+      _rank.text = '#${controller.data.verses.length + 1}';
     } else {
       _rank.text = '#1';
     }
-
+    final verses = controller.data.verses;
     final searchQuery = _searchController.text.toLowerCase();
-    final filteredVerses = controller.data.verses.where((v) {
+    final filteredVerses = verses.where((v) {
       return v.word.toLowerCase().contains(searchQuery) ||
           v.arabic.toLowerCase().contains(searchQuery) ||
           v.meaningEn.toLowerCase().contains(searchQuery) ||
@@ -102,7 +91,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           v.english.toLowerCase().contains(searchQuery) ||
           v.urdu.toLowerCase().contains(searchQuery);
     }).toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
@@ -139,7 +127,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       children: [
                         Expanded(
                           flex: 6,
-                          child: _buildTable(filteredVerses),
+                          child: SizedBox(
+                            height: constraints.maxHeight - 32,
+                            child: _buildTable(filteredVerses, searchQuery),
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -173,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 'Rank (auto-filled)',
                 _rank,
                 readOnly: true,
-                suffixText: '#${controller.data?.verses.length ?? 0 + 1}',
+                suffixText: '#${controller.data.verses.length + 1}',
               ),
               _text('Word (Arabic)', _word, required: true, focusNode: _wordNode),
               _text('Pronounce (e.g. Min)', _pronounce, required: true),
@@ -244,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildTable(List<Verse> verses) {
+  Widget _buildTable(List<Verse> verses, String searchQuery) {
     return Card(
       elevation: 8,
       color: Colors.black.withOpacity(0.4),
@@ -255,99 +246,114 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: [
-                const Text(
-                  'Words List',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                SizeTransition(
-                  sizeFactor: _searchAnimController,
-                  axis: Axis.horizontal,
-                  axisAlignment: 1,
-                  child: SizedBox(
-                    width: 300,
-                    child: _buildAnimatedSearchField(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _isSearchExpanded
-                        ? Colors.blue.withOpacity(0.3)
-                        : Colors.transparent,
-                  ),
-                  child: IconButton(
-                    icon: AnimatedIcon(
-                      icon: AnimatedIcons.search_ellipsis,
-                      progress: _searchAnimController,
-                      color: Colors.white,
-                    ),
-                    onPressed: _toggleSearchBar,
-                    tooltip: _isSearchExpanded ? 'Close search' : 'Open search',
-                  ),
-                ),
-              ],
-            ),
+  children: [
+    const Text(
+      'Words List',
+      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+    const Spacer(),
+    
+    // ALWAYS VISIBLE SIMPLE SEARCHBAR
+    SizedBox(
+      width: 500,
+      child: _buildSearchField(),
+    ),
+  ],
+),
+
             const SizedBox(height: 12),
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final total = constraints.maxWidth;
-                  final hashCol = 95.0;
-                  final spacing = 32.0 * 3;
-                  final available = total - hashCol - spacing;
-                  final arabicW = available * 0.28;
-                  final englishW = available * 0.36;
-                  final urduW = available * 0.36;
-
-                  return SingleChildScrollView(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: DataTable(
-                        columnSpacing: 32,
-                        dataRowHeight: 80,
-                        headingRowHeight: 56,
-                        columns: const [
-                          DataColumn(label: Text('Hash #')),
-                          DataColumn(label: Text('Arabic')),
-                          DataColumn(label: Text('English')),
-                          DataColumn(label: Text('Urdu')),
-                        ],
-                        rows: List<DataRow>.generate(verses.length, (index) {
-                          final v = verses[index];
-                          final rank = (v.rank.isNotEmpty) ? v.rank : '#${index + 1}';
-                          return DataRow(
-                            cells: [
-                              DataCell(Text(rank)),
-                              DataCell(
-                                SizedBox(
-                                  width: arabicW,
-                                  child: _twoLine(v.word, v.arabic),
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: englishW,
-                                  child: _twoLine(v.meaningEn, v.english),
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: urduW,
-                                  child: _twoLine(v.meaningUr, v.urdu),
-                                ),
-                              ),
-                            ],
-                          );
-                        }),
+              child: verses.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No verses available',
+                        style: TextStyle(color: Colors.white70),
                       ),
+                    )
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final total = constraints.maxWidth;
+                        final hashCol = 95.0;
+                        final spacing = 32.0 * 3;
+                        final available = total - hashCol - spacing;
+                        final arabicW = available * 0.28;
+                        final englishW = available * 0.36;
+                        final urduW = available * 0.36;
+                        return SingleChildScrollView(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: DataTable(
+                                  columnSpacing: 32,
+                                  dataRowHeight: 120,
+                                  headingRowHeight: 56,
+                                  columns: [
+                                    const DataColumn(
+                                      label: Text('Hash #'),
+                                    ),
+                                    DataColumn(
+                                      label: SizedBox(
+                                        width: arabicW,
+                                        child: const Text('Arabic'),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: SizedBox(
+                                        width: englishW,
+                                        child: const Text('English'),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: SizedBox(
+                                        width: urduW,
+                                        child: const Text('Urdu'),
+                                      ),
+                                    ),
+                                  ],
+                                  rows: List<DataRow>.generate(verses.length, (index) {
+                                    final v = verses[index];
+                                    final rank = (v.rank.isNotEmpty) ? v.rank : '#${index + 1}';
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(
+                                          SelectableText(
+                                            rank,
+                                            style: const TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: arabicW,
+                                            child: _twoLine(v.word, v.arabic, searchQuery),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: englishW,
+                                            child: _twoLine(v.meaningEn, v.english, searchQuery),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: urduW,
+                                            child: _twoLine(v.meaningUr, v.urdu, searchQuery),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -355,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildAnimatedSearchField() {
+  Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
       decoration: InputDecoration(
@@ -391,25 +397,67 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _twoLine(String top, String bottom) {
+  Widget _twoLine(String top, String bottom, String query) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          top,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        Flexible(
+          child: _highlightedSelectableText(
+            top,
+            query,
+            style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+            maxLines: 2,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(
-          bottom,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
+        Flexible(
+          child: _highlightedSelectableText(
+            bottom,
+            query,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            maxLines: 3,
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _highlightedSelectableText(
+    String text,
+    String query, {
+    required TextStyle style,
+    int maxLines = 1,
+  }) {
+    if (query.isEmpty) {
+      return SelectableText(
+        text,
+        style: style,
+        maxLines: maxLines,
+      );
+    }
+    final lowerText = text.toLowerCase();
+    final escapedQuery = RegExp.escape(query);
+    List<TextSpan> spans = [];
+    int lastIndex = 0;
+    for (final match in RegExp(escapedQuery, caseSensitive: false).allMatches(lowerText)) {
+      if (match.start > lastIndex) {
+        spans.add(TextSpan(text: text.substring(lastIndex, match.start), style: style));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(match.start, match.end),
+          style: style.copyWith(backgroundColor: Colors.yellow.withOpacity(0.5)),
+        ),
+      );
+      lastIndex = match.end;
+    }
+    if (lastIndex < text.length) {
+      spans.add(TextSpan(text: text.substring(lastIndex), style: style));
+    }
+    return SelectableText.rich(
+      TextSpan(children: spans),
+      maxLines: maxLines,
     );
   }
 
