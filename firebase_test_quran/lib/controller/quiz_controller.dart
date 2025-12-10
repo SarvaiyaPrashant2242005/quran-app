@@ -1,5 +1,5 @@
 // quiz_controller.dart
-import 'package:firebase_test_quran/services/local_data_service.dart';
+import 'package:mana/services/local_data_service.dart';
 import 'package:get/get.dart';
 
 class QuizController extends GetxController {

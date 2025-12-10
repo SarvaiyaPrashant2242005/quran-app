@@ -1,5 +1,5 @@
-import 'package:firebase_test_quran/controller/home_controller.dart';
-import 'package:firebase_test_quran/models/verse_data.dart';
+import 'package:mana/controller/home_controller.dart';
+import 'package:mana/models/verse_data.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

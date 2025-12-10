@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_test_quran/controller/home_controller.dart';
-import 'package:firebase_test_quran/models/verse_data.dart';
-import 'package:firebase_test_quran/services/tts_service.dart';
+import 'package:mana/controller/home_controller.dart';
+import 'package:mana/models/verse_data.dart';
+import 'package:mana/services/tts_service.dart';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});

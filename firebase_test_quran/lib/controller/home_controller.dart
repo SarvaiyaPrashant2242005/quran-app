@@ -1,9 +1,9 @@
 // home_controller.dart (GetX version with auto-resume)
 import 'dart:io';
-import 'package:firebase_test_quran/models/verse_data.dart';
-import 'package:firebase_test_quran/services/firestore_service.dart';
-import 'package:firebase_test_quran/services/local_data_service.dart';
-import 'package:firebase_test_quran/services/tts_service.dart';
+import 'package:mana/models/verse_data.dart';
+import 'package:mana/services/firestore_service.dart';
+import 'package:mana/services/local_data_service.dart';
+import 'package:mana/services/tts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';

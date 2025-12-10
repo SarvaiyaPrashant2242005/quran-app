@@ -4,8 +4,8 @@ flutter_launcher_icons:
   image_path: assets/images/App_Icon.png
   min_sdk_android: 21
   adaptive_icon_background: "#FFFFFF"
-name: firebase_test_quran
-description: "A new Flutter project."
+name: mana
+description: "Ma'na - A Quran study application."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 

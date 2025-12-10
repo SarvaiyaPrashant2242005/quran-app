@@ -1,10 +1,10 @@
-import 'package:firebase_test_quran/screens/Homepage.dart';
-import 'package:firebase_test_quran/bindings/home_binding.dart';
+import 'package:mana/screens/Homepage.dart';
+import 'package:mana/bindings/home_binding.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:get/get.dart';
-import 'package:firebase_test_quran/screens/SplashScreen.dart';
+import 'package:mana/screens/SplashScreen.dart';
 import 'package:screen_protector/screen_protector.dart';
 
 
@@ -18,7 +18,6 @@ Future<void> main() async {
   } catch (_) {
     // Ignore if already initialized
   }
-  // Enable screenshot/screen recording protection
   try {
     await ScreenProtector.preventScreenshotOn();
     await ScreenProtector.protectDataLeakageOn();
@@ -33,7 +32,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Quran Word Frequency',
+      title: 'Ma’na',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
