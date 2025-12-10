@@ -5,7 +5,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:get/get.dart';
 import 'package:mana/screens/SplashScreen.dart';
-import 'package:screen_protector/screen_protector.dart';
 
 
 Future<void> main() async {
@@ -19,8 +18,8 @@ Future<void> main() async {
     // Ignore if already initialized
   }
   try {
-    await ScreenProtector.preventScreenshotOn();
-    await ScreenProtector.protectDataLeakageOn();
+    // await ScreenProtector.preventScreenshotOn();
+    // await ScreenProtector.protectDataLeakageOn();
   } catch (_) {}
   runApp(const MyApp());
 }

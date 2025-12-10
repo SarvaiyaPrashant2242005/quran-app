@@ -149,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen>
                               ],
                             ),
                             child: Image.asset(
-                              'assets/images/App_Icon.png',
+                              'assets/images/App_icon.png',
                               width: 120,
                               height: 120,
                             ),
@@ -167,7 +167,7 @@ class _SplashScreenState extends State<SplashScreen>
                           child: Column(
                             children: [
                               Text(
-                                'Quran Verses',
+                                'Ma’na',
                                 style: TextStyle(
                                   fontSize: 36,
                                   fontWeight: FontWeight.bold,

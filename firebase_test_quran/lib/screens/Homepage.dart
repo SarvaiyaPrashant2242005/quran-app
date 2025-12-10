@@ -8,7 +8,7 @@ import 'package:mana/screens/SettingsScreen.dart';
 import 'package:mana/screens/QuizScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:screen_protector/screen_protector.dart';
+// import 'package:screen_protector/screen_protector.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -49,8 +49,8 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     controller = Get.find<HomeController>();
      try {
-     ScreenProtector.preventScreenshotOn();
-     ScreenProtector.protectDataLeakageOn();
+    //  ScreenProtector.preventScreenshotOn();
+    //  ScreenProtector.protectDataLeakageOn();
   } catch (_) {}
     _pageController = PageController();
     _pageController.addListener(_onPageChanged);

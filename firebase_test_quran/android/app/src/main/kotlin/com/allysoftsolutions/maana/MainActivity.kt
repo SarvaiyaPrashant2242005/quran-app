@@ -1,4 +1,4 @@
-package com.example.mana
+package com.allysoftsolutions.maana
 
 import io.flutter.embedding.android.FlutterActivity
 
